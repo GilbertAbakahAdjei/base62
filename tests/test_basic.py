@@ -4,6 +4,7 @@ import pytest
 
 import base62
 
+import io
 
 bytes_int_pairs = [
     (b"\x00", 0),
@@ -123,3 +124,20 @@ def test_invalid_alphabet():
 def test_invalid_string():
     with pytest.raises(TypeError):
         base62.encodebytes({})
+
+def test_padding():
+    assert base62.encode(123, padding=10) == "000000001z"
+    assert base62.encode(123, padding=5) == "0001z"
+    assert base62.encode(123, padding=2) == "1z"
+    assert base62.encode(0, padding=5) == "00000"
+
+def test_stream_encoding():
+    input_stream = io.BytesIO(b"Hello, World!")
+    encoded = list(base62.encode_stream(input_stream))
+    assert "".join(encoded) == base62.encodebytes(b"Hello, World!")
+
+def test_stream_decoding():
+    encoded = base62.encodebytes(b"Hello, World!")
+    input_stream = io.StringIO(encoded)
+    decoded = base62.decode_stream(input_stream)
+    assert decoded == b"Hello, World!"
