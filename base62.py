@@ -49,7 +49,7 @@ def bytes_to_int(barray, byteorder="big", signed=False):
         return sum(ds)
 
 
-def encode(n, minlen=1, charset=CHARSET_DEFAULT):
+def encode(n, minlen=1, charset=CHARSET_DEFAULT, padding=None):
     """Encodes a given integer ``n``."""
 
     chs = []
@@ -65,7 +65,8 @@ def encode(n, minlen=1, charset=CHARSET_DEFAULT):
         chs.append("0")
 
     s = "".join(chs)
-    s = charset[0] * max(minlen - len(s), 0) + s
+    if padding is not None:
+        s = charset[0] * max(minlen - len(s), 0) + s
     return s
 
 
@@ -135,3 +136,20 @@ def _check_type(value, expected_type):
             expected_type, value.__class__.__name__
         )
         raise TypeError(msg)
+
+
+def encode_stream(stream, chunk_size=1024, charset=CHARSET_DEFAULT):
+    """Encodes a stream of bytes into a base62 encoded string."""
+
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield encodebytes(chunk, charset=charset)
+
+
+def decode_stream(encoded_stream, charset=CHARSET_DEFAULT):
+    """Decodes a stream of base62 encoded strings into bytes."""
+
+    for encoded in encoded_stream:
+        yield decodebytes(encoded, charset=charset)
